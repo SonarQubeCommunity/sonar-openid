@@ -44,8 +44,14 @@ import java.util.List;
 
 public class OpenIdClient implements ServerExtension {
 
-  static final String PROPERTY_SONAR_URL = "sonar.openid.sonarServerUrl";
-  static final String PROPERTY_OPENID_URL = "sonar.openid.providerUrl";
+  public static final String PROPERTY_SONAR_URL = "sonar.openid.sonarServerUrl";
+  public static final String PROPERTY_OPENID_URL = "sonar.openid.providerUrl";
+
+  private static final String AX_ATTR_EMAIL = "email";
+  private static final String SREG_ATTR_EMAIL = "email";
+  private static final String SREG_ATTR_FULLNAME = "fullname";
+  private static final String AX_ATTR_FIRSTNAME = "firstName";
+  private static final String AX_ATTR_LASTNAME = "lastName";
 
   private Settings settings;
   private ConsumerManager manager;
@@ -106,15 +112,14 @@ public class OpenIdClient implements ServerExtension {
     try {
       AuthRequest authReq = manager.authenticate(discoveryInfo, returnToUrl);
       FetchRequest fetch = FetchRequest.createFetchRequest();
-      fetch.addAttribute("email", "http://schema.openid.net/contact/email", true);
-      fetch.addAttribute("fullname", "http://axschema.org/namePerson", false);
-      fetch.addAttribute("firstName", "http://axschema.org/namePerson/first", true);
-      fetch.addAttribute("lastName", "http://axschema.org/namePerson/last", true);
+      fetch.addAttribute(AX_ATTR_EMAIL, "http://schema.openid.net/contact/email", true);
+      fetch.addAttribute(AX_ATTR_FIRSTNAME, "http://axschema.org/namePerson/first", true);
+      fetch.addAttribute(AX_ATTR_LASTNAME, "http://axschema.org/namePerson/last", true);
       authReq.addExtension(fetch);
 
       SRegRequest sregReq = SRegRequest.createFetchRequest();
-      sregReq.addAttribute("fullname", true);
-      sregReq.addAttribute("email", true);
+      sregReq.addAttribute(SREG_ATTR_FULLNAME, true);
+      sregReq.addAttribute(SREG_ATTR_EMAIL, true);
       authReq.addExtension(sregReq);
       return authReq;
 
@@ -137,20 +142,20 @@ public class OpenIdClient implements ServerExtension {
 
     SRegResponse sr = getMessageAs(SRegResponse.class, authSuccess, SRegMessage.OPENID_NS_SREG);
     if (sr != null) {
-      name = sr.getAttributeValue("fullname");
-      email = sr.getAttributeValue("email");
+      name = sr.getAttributeValue(SREG_ATTR_FULLNAME);
+      email = sr.getAttributeValue(SREG_ATTR_EMAIL);
     }
     FetchResponse fr = getMessageAs(FetchResponse.class, authSuccess, AxMessage.OPENID_NS_AX);
     if (fr != null) {
       if (name == null) {
-        String first = fr.getAttributeValue("firstName");
-        String last = fr.getAttributeValue("lastName");
+        String first = fr.getAttributeValue(AX_ATTR_FIRSTNAME);
+        String last = fr.getAttributeValue(AX_ATTR_LASTNAME);
         if (first != null && last != null) {
           name = first + " " + last;
         }
       }
       if (email == null) {
-        email = fr.getAttributeValue("email");
+        email = fr.getAttributeValue(AX_ATTR_EMAIL);
       }
     }
     UserDetails user = null;

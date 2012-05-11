@@ -23,7 +23,6 @@ import org.openid4java.consumer.VerificationResult;
 import org.openid4java.discovery.Identifier;
 import org.openid4java.message.AuthSuccess;
 import org.openid4java.message.ParameterList;
-import org.sonar.api.security.UserDetails;
 import org.sonar.api.web.ServletFilter;
 
 import javax.servlet.*;
@@ -51,10 +50,10 @@ public final class OpenIdValidationFilter extends ServletFilter {
   public void init(FilterConfig filterConfig) throws ServletException {
   }
 
-  public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
+  public void doFilter(ServletRequest request, ServletResponse response, FilterChain filterChain) throws IOException, ServletException {
     try {
-      ParameterList responseParameters = new ParameterList(servletRequest.getParameterMap());
-      HttpServletRequest httpRequest = (HttpServletRequest) servletRequest;
+      ParameterList responseParameters = new ParameterList(request.getParameterMap());
+      HttpServletRequest httpRequest = (HttpServletRequest) request;
 
       StringBuffer receivingURL = httpRequest.getRequestURL();
       String queryString = httpRequest.getQueryString();
@@ -67,10 +66,12 @@ public final class OpenIdValidationFilter extends ServletFilter {
       Identifier verified = verification.getVerifiedId();
       if (verified != null) {
         AuthSuccess authSuccess = (AuthSuccess) verification.getAuthResponse();
-        servletRequest.setAttribute(USER_ATTRIBUTE, OpenIdClient.toUser(authSuccess));
+        if (authSuccess != null) {
+          request.setAttribute(USER_ATTRIBUTE, OpenIdClient.toUser(authSuccess));
+        }
       }
 
-      filterChain.doFilter(servletRequest, servletResponse);
+      filterChain.doFilter(request, response);
 
     } catch (Exception e) {
       throw new IllegalStateException("Fail to validate openId token", e);
