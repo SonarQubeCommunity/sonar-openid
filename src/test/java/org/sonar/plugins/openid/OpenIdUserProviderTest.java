@@ -20,7 +20,7 @@
 package org.sonar.plugins.openid;
 
 import org.junit.Test;
-import org.sonar.api.security.Authenticator;
+import org.sonar.api.security.ExternalUsersProvider;
 import org.sonar.api.security.UserDetails;
 
 import javax.servlet.http.HttpServletRequest;
@@ -29,25 +29,24 @@ import static org.fest.assertions.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class OpenIdAuthenticatorTest {
-
+public class OpenIdUserProviderTest {
   @Test
-  public void doAuthenticate_success() {
-    OpenIdAuthenticator authenticator = new OpenIdAuthenticator();
+  public void doGetUserDetails_success() {
+    OpenIdUserProvider provider = new OpenIdUserProvider();
     HttpServletRequest request = mock(HttpServletRequest.class);
     UserDetails user = new UserDetails();
     user.setName("rick");
     when(request.getAttribute(OpenIdValidationFilter.USER_ATTRIBUTE)).thenReturn(user);
-    Authenticator.Context context = new Authenticator.Context(null, null, request);
+    ExternalUsersProvider.Context context = new ExternalUsersProvider.Context(null, request);
 
-    assertThat(authenticator.doAuthenticate(context)).isTrue();
+    assertThat(provider.doGetUserDetails(context)).isSameAs(user);
   }
 
   @Test
-  public void doAuthenticate_failure() {
-    OpenIdAuthenticator authenticator = new OpenIdAuthenticator();
-    Authenticator.Context context = new Authenticator.Context(null, null, mock(HttpServletRequest.class));
+  public void doGetUserDetails_failure() {
+    OpenIdUserProvider provider = new OpenIdUserProvider();
+    ExternalUsersProvider.Context context = new ExternalUsersProvider.Context(null, mock(HttpServletRequest.class));
 
-    assertThat(authenticator.doAuthenticate(context)).isFalse();
+    assertThat(provider.doGetUserDetails(context)).isNull();
   }
 }

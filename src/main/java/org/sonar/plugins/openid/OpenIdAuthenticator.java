@@ -19,16 +19,13 @@
  */
 package org.sonar.plugins.openid;
 
-import com.google.common.base.Strings;
 import org.sonar.api.security.Authenticator;
-import org.sonar.api.security.UserDetails;
 
 public final class OpenIdAuthenticator extends Authenticator {
 
   @Override
   public boolean doAuthenticate(Context context) {
-    UserDetails user = (UserDetails) context.getRequest().getAttribute(OpenIdValidationFilter.USER_ATTRIBUTE);
-    return user != null && !Strings.isNullOrEmpty(user.getName());
+    return context.getRequest().getAttribute(OpenIdValidationFilter.USER_ATTRIBUTE) != null;
   }
 
 }
