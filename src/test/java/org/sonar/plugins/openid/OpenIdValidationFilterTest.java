@@ -19,16 +19,11 @@
  */
 package org.sonar.plugins.openid;
 
-import com.google.common.base.Strings;
-import org.sonar.api.security.Authenticator;
-import org.sonar.api.security.UserDetails;
+import org.junit.Test;
 
-public final class OpenIdAuthenticator extends Authenticator {
+public class OpenIdValidationFilterTest {
+  @Test
+  public void doGetPattern() {
 
-  @Override
-  public boolean doAuthenticate(Context context) {
-    UserDetails user = (UserDetails) context.getRequest().getAttribute(OpenIdValidationFilter.USER_ATTRIBUTE);
-    return user != null && !Strings.isNullOrEmpty(user.getName());
   }
-
 }

@@ -145,7 +145,7 @@ public class OpenIdClient implements ServerExtension {
       if (name == null) {
         String first = fr.getAttributeValue("firstName");
         String last = fr.getAttributeValue("lastName");
-        if (first != null & last != null) {
+        if (first != null && last != null) {
           name = first + " " + last;
         }
       }
