@@ -19,6 +19,7 @@
  */
 package org.sonar.plugins.openid;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import org.openid4java.consumer.ConsumerManager;
@@ -43,6 +44,9 @@ import java.util.List;
 
 public class OpenIdClient implements ServerExtension {
 
+  static final String PROPERTY_SONAR_URL = "sonar.openid.sonarServerUrl";
+  static final String PROPERTY_OPENID_URL = "sonar.openid.providerUrl";
+
   private Settings settings;
   private ConsumerManager manager;
   private DiscoveryInformation discoveryInfo;
@@ -52,20 +56,33 @@ public class OpenIdClient implements ServerExtension {
     this.settings = settings;
   }
 
+  @VisibleForTesting
+  String getReturnToUrl() {
+    return returnToUrl;
+  }
+
+  @VisibleForTesting
+  public DiscoveryInformation getDiscoveryInfo() {
+    return discoveryInfo;
+  }
+
   public void start() {
     initManager();
     initDiscoveryInfo();
     initReturnToUrl();
   }
 
-  private void initReturnToUrl() {
-    String sonarUrl = settings.getString("sonar.openid.sonarServerUrl");
+  @VisibleForTesting
+  void initReturnToUrl() {
+    String sonarUrl = settings.getString(PROPERTY_SONAR_URL);
     Preconditions.checkState(!Strings.isNullOrEmpty(sonarUrl), "Property sonar.openid.sonarServerUrl is missing");
     returnToUrl = sonarUrl + "/openid/validate";
   }
 
-  private void initDiscoveryInfo() {
-    String endpoint = settings.getString("sonar.openid.providerUrl");
+  @VisibleForTesting
+  void initDiscoveryInfo() {
+    String endpoint = settings.getString(PROPERTY_OPENID_URL);
+    Preconditions.checkState(!Strings.isNullOrEmpty(endpoint), "Property " + PROPERTY_OPENID_URL + " is missing");
     try {
       List l = new Discovery().discover(endpoint);
       if (l == null || l.isEmpty()) {
@@ -99,7 +116,6 @@ public class OpenIdClient implements ServerExtension {
       sregReq.addAttribute("fullname", true);
       sregReq.addAttribute("email", true);
       authReq.addExtension(sregReq);
-
       return authReq;
 
     } catch (Exception e) {
@@ -129,16 +145,20 @@ public class OpenIdClient implements ServerExtension {
       if (name == null) {
         String first = fr.getAttributeValue("firstName");
         String last = fr.getAttributeValue("lastName");
-        if (first != null & last != null)
+        if (first != null & last != null) {
           name = first + " " + last;
+        }
       }
       if (email == null) {
         email = fr.getAttributeValue("email");
       }
     }
-    UserDetails user = new UserDetails();
-    user.setName(name);
-    user.setEmail(email);
+    UserDetails user = null;
+    if (!Strings.isNullOrEmpty(name)) {
+      user = new UserDetails();
+      user.setName(name);
+      user.setEmail(email);
+    }
     return user;
   }
 

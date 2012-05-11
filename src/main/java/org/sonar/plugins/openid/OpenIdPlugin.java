@@ -32,13 +32,13 @@ import java.util.List;
 public final class OpenIdPlugin extends SonarPlugin {
 
   public List getExtensions() {
-    return ImmutableList.of(CasExtensions.class);
+    return ImmutableList.of(Extensions.class);
   }
 
-  public static final class CasExtensions extends ExtensionProvider implements ServerExtension {
+  public static final class Extensions extends ExtensionProvider implements ServerExtension {
     private Settings settings;
 
-    public CasExtensions(Settings settings) {
+    public Extensions(Settings settings) {
       this.settings = settings;
     }
 

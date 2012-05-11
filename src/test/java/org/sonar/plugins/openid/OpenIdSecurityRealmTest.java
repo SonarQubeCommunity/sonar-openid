@@ -19,13 +19,23 @@
  */
 package org.sonar.plugins.openid;
 
-import org.sonar.api.security.ExternalUsersProvider;
-import org.sonar.api.security.UserDetails;
+import org.junit.Test;
 
-public final class OpenIdUserProvider extends ExternalUsersProvider {
+import static org.fest.assertions.Assertions.assertThat;
 
-  @Override
-  public UserDetails doGetUserDetails(Context context) {
-    return (UserDetails) context.getRequest().getAttribute("openid_user");
+public class OpenIdSecurityRealmTest {
+  @Test
+  public void hasAuthenticator() {
+    assertThat(new OpenIdSecurityRealm().doGetAuthenticator()).isInstanceOf(OpenIdAuthenticator.class);
+  }
+
+  @Test
+  public void hasUserProvider() {
+    assertThat(new OpenIdSecurityRealm().getUsersProvider()).isInstanceOf(OpenIdUserProvider.class);
+  }
+
+  @Test
+  public void justForCoverage() {
+    assertThat(new OpenIdSecurityRealm().getName()).isEqualTo("openid");
   }
 }
