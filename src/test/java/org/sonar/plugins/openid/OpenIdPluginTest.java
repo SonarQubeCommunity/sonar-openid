@@ -78,4 +78,15 @@ public class OpenIdPluginTest {
   public void getExtensions() {
     assertThat(new OpenIdPlugin().getExtensions()).containsExactly(OpenIdPlugin.Extensions.class);
   }
+
+  @Test
+  public void validationFilterMustBeDeclaredBeforeAuthenticationFilter() {
+    // else the sonar.forceAuthentication mode is not supported
+    Settings settings = new Settings()
+        .setProperty("sonar.security.realm", "openid")
+        .setProperty("sonar.authenticator.createUsers", "true");
+    List<ServerExtension> extensions = (List<ServerExtension>) new OpenIdPlugin.Extensions(settings).provide();
+
+    assertThat(extensions.indexOf(OpenIdValidationFilter.class)).isLessThan(extensions.indexOf(OpenIdAuthenticationFilter.class));
+  }
 }

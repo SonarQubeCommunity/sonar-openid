@@ -50,8 +50,8 @@ public final class OpenIdPlugin extends SonarPlugin {
         extensions.add(OpenIdSecurityRealm.class);
         extensions.add(OpenIdClient.class);
         extensions.add(OpenIdAuthenticator.class);
-        extensions.add(OpenIdAuthenticationFilter.class);
         extensions.add(OpenIdValidationFilter.class);
+        extensions.add(OpenIdAuthenticationFilter.class);
       }
       return extensions;
     }
