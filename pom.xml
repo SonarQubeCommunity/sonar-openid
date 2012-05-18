@@ -38,8 +38,8 @@
     </developer>
   </developers>
   <scm>
-    <connection>scm:svn:http://svn.codehaus.org/sonar-plugins/trunk/openid</connection>
-    <developerConnection>scm:svn:https://svn.codehaus.org/sonar-plugins/trunk/openid</developerConnection>
+    <connection>scm:git:https://github.com/SonarCommunity/sonar-openid</connection>
+    <developerConnection>scm:git:https://github.com/SonarCommunity/sonar-openid</developerConnection>
     <url>http://svn.sonar-plugins.codehaus.org</url>
   </scm>
   <!--<issueManagement>
