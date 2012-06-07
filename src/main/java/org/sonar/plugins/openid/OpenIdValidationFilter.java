@@ -19,6 +19,7 @@
  */
 package org.sonar.plugins.openid;
 
+import org.apache.commons.lang.StringUtils;
 import org.openid4java.consumer.VerificationResult;
 import org.openid4java.discovery.Identifier;
 import org.openid4java.message.AuthSuccess;
@@ -57,7 +58,7 @@ public final class OpenIdValidationFilter extends ServletFilter {
 
       StringBuffer receivingURL = httpRequest.getRequestURL();
       String queryString = httpRequest.getQueryString();
-      if (queryString != null && queryString.length() > 0) {
+      if (StringUtils.isNotEmpty(queryString)) {
         receivingURL.append("?").append(httpRequest.getQueryString());
       }
 
