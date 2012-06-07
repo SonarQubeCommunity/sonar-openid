@@ -14,7 +14,7 @@
   <name>Sonar OpenID Plugin</name>
 
   <properties>
-    <sonar.version>3.1-SNAPSHOT</sonar.version>
+    <sonar.version>3.1-RC2</sonar.version>
   </properties>
 
   <inceptionYear>2012</inceptionYear>
@@ -42,14 +42,14 @@
     <developerConnection>scm:git:https://github.com/SonarCommunity/sonar-openid</developerConnection>
     <url>http://svn.sonar-plugins.codehaus.org</url>
   </scm>
-  <!--<issueManagement>
+  <issueManagement>
     <system>JIRA</system>
-    <url>http://jira.codehaus.org/browse/SONARPLUGINS/component/14293</url>
-  </issueManagement>-->
-  <!--<ciManagement>
+    <url>http://jira.codehaus.org/browse/SONARPLUGINS/component/15493</url>
+  </issueManagement>
+  <ciManagement>
     <system>Bamboo</system>
-    <url>http://ci.codehaus.org/browse/SONAR-LDAP</url>
-  </ciManagement>-->
+    <url>https://sonarplugins.ci.cloudbees.com/job/openid</url>
+  </ciManagement>
 
   <dependencies>
     <dependency>
