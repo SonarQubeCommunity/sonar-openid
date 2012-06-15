@@ -24,6 +24,8 @@ import org.openid4java.message.ParameterList;
 import org.sonar.api.security.UserDetails;
 
 import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -57,6 +59,16 @@ public class OpenIdValidationFilterTest {
     OpenIdValidationFilter filter = new OpenIdValidationFilter(mock(OpenIdClient.class));
 
     assertThat(filter.doGetPattern().toString()).isEqualTo("/openid/validate");
+  }
+
+  @Test
+  public void init_and_destroy_do_nothing() throws ServletException {
+    OpenIdValidationFilter filter = new OpenIdValidationFilter(mock(OpenIdClient.class));
+
+    filter.init(mock(FilterConfig.class));
+    filter.destroy();
+
+    // oh well... what can be tested ??
   }
 
   @Test

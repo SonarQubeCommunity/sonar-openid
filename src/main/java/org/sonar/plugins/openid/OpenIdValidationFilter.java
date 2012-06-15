@@ -50,26 +50,21 @@ public final class OpenIdValidationFilter extends ServletFilter {
   }
 
   public void doFilter(ServletRequest request, ServletResponse response, FilterChain filterChain) throws IOException, ServletException {
-    try {
-      ParameterList responseParameters = new ParameterList(request.getParameterMap());
-      HttpServletRequest httpRequest = (HttpServletRequest) request;
+    ParameterList responseParameters = new ParameterList(request.getParameterMap());
+    HttpServletRequest httpRequest = (HttpServletRequest) request;
 
-      StringBuffer receivingURL = httpRequest.getRequestURL();
-      String queryString = httpRequest.getQueryString();
-      if (StringUtils.isNotEmpty(queryString)) {
-        receivingURL.append("?").append(httpRequest.getQueryString());
-      }
-
-      UserDetails user = openIdClient.verify(receivingURL.toString(), responseParameters);
-      if (user != null) {
-        request.setAttribute(USER_ATTRIBUTE, user);
-      }
-
-      filterChain.doFilter(request, response);
-
-    } catch (Exception e) {
-      throw new IllegalStateException("Fail to validate openId token", e);
+    StringBuffer receivingURL = httpRequest.getRequestURL();
+    String queryString = httpRequest.getQueryString();
+    if (StringUtils.isNotEmpty(queryString)) {
+      receivingURL.append("?").append(httpRequest.getQueryString());
     }
+
+    UserDetails user = openIdClient.verify(receivingURL.toString(), responseParameters);
+    if (user != null) {
+      request.setAttribute(USER_ATTRIBUTE, user);
+    }
+
+    filterChain.doFilter(request, response);
   }
 
   public void destroy() {

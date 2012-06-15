@@ -22,9 +22,12 @@ package org.sonar.plugins.openid;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.openid4java.consumer.ConsumerException;
 import org.openid4java.consumer.ConsumerManager;
+import org.openid4java.discovery.DiscoveryInformation;
+import org.openid4java.message.AuthRequest;
 import org.openid4java.message.AuthSuccess;
-import org.openid4java.message.MessageException;
+import org.openid4java.message.MessageExtension;
 import org.openid4java.message.ParameterList;
 import org.openid4java.message.ax.AxMessage;
 import org.openid4java.message.ax.FetchResponse;
@@ -34,8 +37,8 @@ import org.sonar.api.config.Settings;
 import org.sonar.api.security.UserDetails;
 
 import static org.fest.assertions.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.*;
 
 public class OpenIdClientTest {
 
@@ -75,8 +78,8 @@ public class OpenIdClientTest {
   @Test
   public void initDiscoveryInfo_test_google() {
     Settings settings = new Settings()
-        .setProperty(OpenIdClient.PROPERTY_SONAR_URL, "http://localhost:9000")
-        .setProperty(OpenIdClient.PROPERTY_OPENID_URL, "https://www.google.com/o8/id");
+      .setProperty(OpenIdClient.PROPERTY_SONAR_URL, "http://localhost:9000")
+      .setProperty(OpenIdClient.PROPERTY_OPENID_URL, "https://www.google.com/o8/id");
     OpenIdClient client = new OpenIdClient(settings);
     client.start();
 
@@ -90,8 +93,8 @@ public class OpenIdClientTest {
     thrown.expectMessage("Fail to discover OpenID endpoint: abc is not xyz");
 
     Settings settings = new Settings()
-        .setProperty(OpenIdClient.PROPERTY_SONAR_URL, "http://localhost:9000")
-        .setProperty(OpenIdClient.PROPERTY_OPENID_URL, "abc is not xyz");
+      .setProperty(OpenIdClient.PROPERTY_SONAR_URL, "http://localhost:9000")
+      .setProperty(OpenIdClient.PROPERTY_OPENID_URL, "abc is not xyz");
     OpenIdClient client = new OpenIdClient(settings);
     client.start();
   }
@@ -147,11 +150,33 @@ public class OpenIdClientTest {
   }
 
   @Test
-  public void verify_failed_authentication() throws MessageException {
+  public void verify_failed_authentication() throws Exception {
     OpenIdClient client = new OpenIdClient(mock(ConsumerManager.class));
 
     UserDetails user = client.verify("https://www.google.com/o8/id", ParameterList.createFromQueryString(""));
 
     assertThat(user).isNull();
+  }
+
+  @Test
+  public void createAuthenticationRequest() throws Exception {
+    ConsumerManager consumerManager = mock(ConsumerManager.class);
+    AuthRequest request = mock(AuthRequest.class);
+    when(consumerManager.authenticate(any(DiscoveryInformation.class), anyString())).thenReturn(request);
+
+    AuthRequest result = new OpenIdClient(consumerManager).createAuthenticationRequest();
+
+    assertThat(result).isSameAs(request);
+    verify(request, times(2)).addExtension(any(MessageExtension.class));
+  }
+
+  @Test
+  public void createAuthenticationRequest_fail() throws Exception {
+    thrown.expect(IllegalStateException.class);
+
+    ConsumerManager consumerManager = mock(ConsumerManager.class);
+    when(consumerManager.authenticate(any(DiscoveryInformation.class), anyString())).thenThrow(new ConsumerException(""));
+
+    new OpenIdClient(consumerManager).createAuthenticationRequest();
   }
 }
