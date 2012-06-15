@@ -28,6 +28,7 @@ import org.openid4java.consumer.InMemoryNonceVerifier;
 import org.openid4java.consumer.VerificationResult;
 import org.openid4java.discovery.Discovery;
 import org.openid4java.discovery.DiscoveryInformation;
+import org.openid4java.discovery.Identifier;
 import org.openid4java.message.*;
 import org.openid4java.message.ax.AxMessage;
 import org.openid4java.message.ax.FetchRequest;
@@ -60,6 +61,11 @@ public class OpenIdClient implements ServerExtension {
 
   public OpenIdClient(Settings settings) {
     this.settings = settings;
+  }
+
+  @VisibleForTesting
+  OpenIdClient(ConsumerManager manager) {
+    this.manager = manager;
   }
 
   @VisibleForTesting
@@ -128,43 +134,60 @@ public class OpenIdClient implements ServerExtension {
     }
   }
 
-  VerificationResult verify(String receivingUrl, ParameterList responseParameters) {
+  UserDetails verify(String receivingUrl, ParameterList responseParameters) {
+    VerificationResult verification;
     try {
-      return manager.verify(receivingUrl, responseParameters, discoveryInfo);
+      verification = manager.verify(receivingUrl, responseParameters, discoveryInfo);
     } catch (Exception e) {
-      throw new IllegalStateException("Fail to verify openId parameters", e);
+      throw new IllegalStateException("Fail to verify OpenID parameters", e);
     }
-  }
 
-  static UserDetails toUser(AuthSuccess authSuccess) throws MessageException {
-    String name = null;
-    String email = null;
-
-    SRegResponse sr = getMessageAs(SRegResponse.class, authSuccess, SRegMessage.OPENID_NS_SREG);
-    if (sr != null) {
-      name = sr.getAttributeValue(SREG_ATTR_FULLNAME);
-      email = sr.getAttributeValue(SREG_ATTR_EMAIL);
-    }
-    FetchResponse fr = getMessageAs(FetchResponse.class, authSuccess, AxMessage.OPENID_NS_AX);
-    if (fr != null) {
-      if (name == null) {
-        String first = fr.getAttributeValue(AX_ATTR_FIRSTNAME);
-        String last = fr.getAttributeValue(AX_ATTR_LASTNAME);
-        if (first != null && last != null) {
-          name = first + " " + last;
+    if (verification != null) {
+      Identifier verified = verification.getVerifiedId();
+      if (verified != null) {
+        AuthSuccess authSuccess = (AuthSuccess) verification.getAuthResponse();
+        if (authSuccess != null) {
+          return toUser(authSuccess);
         }
       }
-      if (email == null) {
-        email = fr.getAttributeValue(AX_ATTR_EMAIL);
+    }
+    return null;
+  }
+
+
+  static UserDetails toUser(AuthSuccess authSuccess) {
+    try {
+      String name = null;
+      String email = null;
+
+      SRegResponse sr = getMessageAs(SRegResponse.class, authSuccess, SRegMessage.OPENID_NS_SREG);
+      if (sr != null) {
+        name = sr.getAttributeValue(SREG_ATTR_FULLNAME);
+        email = sr.getAttributeValue(SREG_ATTR_EMAIL);
       }
+      FetchResponse fr = getMessageAs(FetchResponse.class, authSuccess, AxMessage.OPENID_NS_AX);
+      if (fr != null) {
+        if (name == null) {
+          String first = fr.getAttributeValue(AX_ATTR_FIRSTNAME);
+          String last = fr.getAttributeValue(AX_ATTR_LASTNAME);
+          if (first != null && last != null) {
+            name = first + " " + last;
+          }
+        }
+        if (email == null) {
+          email = fr.getAttributeValue(AX_ATTR_EMAIL);
+        }
+      }
+      UserDetails user = null;
+      if (!Strings.isNullOrEmpty(name)) {
+        user = new UserDetails();
+        user.setName(name);
+        user.setEmail(email);
+      }
+      return user;
+    } catch (Exception e) {
+      throw new IllegalStateException("Fail to read openId response", e);
     }
-    UserDetails user = null;
-    if (!Strings.isNullOrEmpty(name)) {
-      user = new UserDetails();
-      user.setName(name);
-      user.setEmail(email);
-    }
-    return user;
   }
 
   private static <T> T getMessageAs(Class<T> c, AuthSuccess authSuccess, String typeUri) throws MessageException {

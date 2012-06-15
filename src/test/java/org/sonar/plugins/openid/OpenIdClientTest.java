@@ -22,7 +22,10 @@ package org.sonar.plugins.openid;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.openid4java.consumer.ConsumerManager;
 import org.openid4java.message.AuthSuccess;
+import org.openid4java.message.MessageException;
+import org.openid4java.message.ParameterList;
 import org.openid4java.message.ax.AxMessage;
 import org.openid4java.message.ax.FetchResponse;
 import org.openid4java.message.sreg.SRegMessage;
@@ -141,5 +144,14 @@ public class OpenIdClientTest {
 
     assertThat(user.getName()).isEqualTo("Rick Hunter");
     assertThat(user.getEmail()).isEqualTo("rick@hunter.com");
+  }
+
+  @Test
+  public void verify_failed_authentication() throws MessageException {
+    OpenIdClient client = new OpenIdClient(mock(ConsumerManager.class));
+
+    UserDetails user = client.verify("https://www.google.com/o8/id", ParameterList.createFromQueryString(""));
+
+    assertThat(user).isNull();
   }
 }

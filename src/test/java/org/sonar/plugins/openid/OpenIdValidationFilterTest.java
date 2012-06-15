@@ -20,8 +20,8 @@
 package org.sonar.plugins.openid;
 
 import org.junit.Test;
-import org.openid4java.consumer.VerificationResult;
 import org.openid4java.message.ParameterList;
+import org.sonar.api.security.UserDetails;
 
 import javax.servlet.FilterChain;
 import javax.servlet.http.HttpServletRequest;
@@ -34,7 +34,7 @@ public class OpenIdValidationFilterTest {
   @Test
   public void doVerifyAndContinueChaining() throws Exception {
     OpenIdClient openIdClient = mock(OpenIdClient.class);
-    when(openIdClient.verify(anyString(), any(ParameterList.class))).thenReturn(new VerificationResult());
+    when(openIdClient.verify(anyString(), any(ParameterList.class))).thenReturn(null); //
 
     OpenIdValidationFilter filter = new OpenIdValidationFilter(openIdClient);
     HttpServletRequest request = mock(HttpServletRequest.class);
@@ -43,6 +43,9 @@ public class OpenIdValidationFilterTest {
     FilterChain chain = mock(FilterChain.class);
 
     filter.doFilter(request, response, chain);
+
+    // not authenticated
+    verify(request, never()).setAttribute(anyString(), anyObject());
 
     verify(openIdClient).verify(eq("http://www.google.com/o8/id"), any(ParameterList.class));
     verify(chain).doFilter(request, response);
@@ -54,5 +57,26 @@ public class OpenIdValidationFilterTest {
     OpenIdValidationFilter filter = new OpenIdValidationFilter(mock(OpenIdClient.class));
 
     assertThat(filter.doGetPattern().toString()).isEqualTo("/openid/validate");
+  }
+
+  @Test
+  public void add_user_to_session_on_successful_authentication() throws Exception {
+    OpenIdClient openIdClient = mock(OpenIdClient.class);
+    UserDetails user = new UserDetails();
+    when(openIdClient.verify(anyString(), any(ParameterList.class))).thenReturn(user);
+
+    OpenIdValidationFilter filter = new OpenIdValidationFilter(openIdClient);
+    HttpServletRequest request = mock(HttpServletRequest.class);
+    when(request.getRequestURL()).thenReturn(new StringBuffer("http://www.google.com/o8/id"));
+    HttpServletResponse response = mock(HttpServletResponse.class);
+    FilterChain chain = mock(FilterChain.class);
+
+    filter.doFilter(request, response, chain);
+
+    // user is added to HTTP request
+    verify(request).setAttribute(OpenIdValidationFilter.USER_ATTRIBUTE, user);
+
+    // continue chaining
+    verify(chain).doFilter(request, response);
   }
 }

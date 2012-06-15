@@ -20,10 +20,8 @@
 package org.sonar.plugins.openid;
 
 import org.apache.commons.lang.StringUtils;
-import org.openid4java.consumer.VerificationResult;
-import org.openid4java.discovery.Identifier;
-import org.openid4java.message.AuthSuccess;
 import org.openid4java.message.ParameterList;
+import org.sonar.api.security.UserDetails;
 import org.sonar.api.web.ServletFilter;
 
 import javax.servlet.*;
@@ -62,14 +60,9 @@ public final class OpenIdValidationFilter extends ServletFilter {
         receivingURL.append("?").append(httpRequest.getQueryString());
       }
 
-      VerificationResult verification = openIdClient.verify(receivingURL.toString(), responseParameters);
-
-      Identifier verified = verification.getVerifiedId();
-      if (verified != null) {
-        AuthSuccess authSuccess = (AuthSuccess) verification.getAuthResponse();
-        if (authSuccess != null) {
-          request.setAttribute(USER_ATTRIBUTE, OpenIdClient.toUser(authSuccess));
-        }
+      UserDetails user = openIdClient.verify(receivingURL.toString(), responseParameters);
+      if (user != null) {
+        request.setAttribute(USER_ATTRIBUTE, user);
       }
 
       filterChain.doFilter(request, response);
