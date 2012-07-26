@@ -1,21 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
+
   <parent>
     <groupId>org.codehaus.sonar-plugins</groupId>
     <artifactId>parent</artifactId>
-    <version>13</version>
-    <relativePath>../parent</relativePath>
+    <version>14</version>
   </parent>
+
   <artifactId>sonar-openid-plugin</artifactId>
   <version>1.1-SNAPSHOT</version>
   <packaging>sonar-plugin</packaging>
+
   <name>Sonar OpenID Plugin</name>
-
-  <properties>
-    <sonar.version>3.1</sonar.version>
-  </properties>
-
   <inceptionYear>2012</inceptionYear>
   <organization>
     <name>SonarSource</name>
@@ -36,6 +33,7 @@
       <timezone>+1</timezone>
     </developer>
   </developers>
+
   <scm>
     <connection>scm:git:https://github.com/SonarCommunity/sonar-openid</connection>
     <developerConnection>scm:git:https://github.com/SonarCommunity/sonar-openid</developerConnection>
@@ -49,6 +47,10 @@
     <system>Cloudbees</system>
     <url>https://sonarplugins.ci.cloudbees.com/job/openid</url>
   </ciManagement>
+
+  <properties>
+    <sonar.version>3.1</sonar.version>
+  </properties>
 
   <dependencies>
     <dependency>
@@ -131,7 +133,6 @@
       <version>1.6.4</version>
       <scope>test</scope>
     </dependency>
-
   </dependencies>
 
   <build>
@@ -146,4 +147,5 @@
       </plugin>
     </plugins>
   </build>
+
 </project>
