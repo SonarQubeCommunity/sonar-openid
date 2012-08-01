@@ -34,13 +34,14 @@ import static org.mockito.Mockito.*;
 
 public class OpenIdValidationFilterTest {
   @Test
-  public void doVerifyAndContinueChaining() throws Exception {
+  public void should_verify_and_continue_chaining() throws Exception {
     OpenIdClient openIdClient = mock(OpenIdClient.class);
-    when(openIdClient.verify(anyString(), any(ParameterList.class))).thenReturn(null); //
+    when(openIdClient.verify(anyString(), any(ParameterList.class))).thenReturn(null);
+    when(openIdClient.getReturnToUrl()).thenReturn("http://localhost:9000");
 
     OpenIdValidationFilter filter = new OpenIdValidationFilter(openIdClient);
     HttpServletRequest request = mock(HttpServletRequest.class);
-    when(request.getRequestURL()).thenReturn(new StringBuffer("http://www.google.com/o8/id"));
+    when(request.getRequestURL()).thenReturn(new StringBuffer("http://localhost:9000?foo=bar"));
     HttpServletResponse response = mock(HttpServletResponse.class);
     FilterChain chain = mock(FilterChain.class);
 
@@ -49,7 +50,30 @@ public class OpenIdValidationFilterTest {
     // not authenticated
     verify(request, never()).setAttribute(anyString(), anyObject());
 
-    verify(openIdClient).verify(eq("http://www.google.com/o8/id"), any(ParameterList.class));
+    verify(openIdClient).verify(eq("http://localhost:9000?foo=bar"), any(ParameterList.class));
+    verify(chain).doFilter(request, response);
+    verifyZeroInteractions(response);
+  }
+
+  @Test
+  public void should_support_ssl() throws Exception {
+    OpenIdClient openIdClient = mock(OpenIdClient.class);
+    when(openIdClient.verify(anyString(), any(ParameterList.class))).thenReturn(null);
+    when(openIdClient.getReturnToUrl()).thenReturn("https://localhost:9000");
+
+    OpenIdValidationFilter filter = new OpenIdValidationFilter(openIdClient);
+    HttpServletRequest request = mock(HttpServletRequest.class);
+    // return http instead of https when a proxy is installed
+    when(request.getRequestURL()).thenReturn(new StringBuffer("http://localhost:9000?foo=bar"));
+    HttpServletResponse response = mock(HttpServletResponse.class);
+    FilterChain chain = mock(FilterChain.class);
+
+    filter.doFilter(request, response, chain);
+
+    // not authenticated
+    verify(request, never()).setAttribute(anyString(), anyObject());
+
+    verify(openIdClient).verify(eq("https://localhost:9000?foo=bar"), any(ParameterList.class));
     verify(chain).doFilter(request, response);
     verifyZeroInteractions(response);
   }

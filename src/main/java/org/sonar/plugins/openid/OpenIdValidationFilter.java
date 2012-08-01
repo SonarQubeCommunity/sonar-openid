@@ -19,6 +19,7 @@
  */
 package org.sonar.plugins.openid;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.commons.lang.StringUtils;
 import org.openid4java.message.ParameterList;
 import org.sonar.api.security.UserDetails;
@@ -53,13 +54,8 @@ public final class OpenIdValidationFilter extends ServletFilter {
     ParameterList responseParameters = new ParameterList(request.getParameterMap());
     HttpServletRequest httpRequest = (HttpServletRequest) request;
 
-    StringBuffer receivingURL = httpRequest.getRequestURL();
-    String queryString = httpRequest.getQueryString();
-    if (StringUtils.isNotEmpty(queryString)) {
-      receivingURL.append("?").append(httpRequest.getQueryString());
-    }
-
-    UserDetails user = openIdClient.verify(receivingURL.toString(), responseParameters);
+    String receivingURL = requestUrl(httpRequest);
+    UserDetails user = openIdClient.verify(receivingURL, responseParameters);
     if (user != null) {
       request.setAttribute(USER_ATTRIBUTE, user);
     }
@@ -67,6 +63,22 @@ public final class OpenIdValidationFilter extends ServletFilter {
     filterChain.doFilter(request, response);
   }
 
+  @VisibleForTesting
+  String requestUrl(HttpServletRequest httpRequest) {
+    StringBuffer receivingURL = httpRequest.getRequestURL();
+    String queryString = httpRequest.getQueryString();
+    if (StringUtils.isNotEmpty(queryString)) {
+      receivingURL.append("?").append(httpRequest.getQueryString());
+    }
+
+    // Support SSL endpoint
+    // httpRequest.getRequestURL() extracts http:// if a proxy like nginx or mod_proxy is installed in front of server.
+    String protocol = StringUtils.substringBefore(openIdClient.getReturnToUrl(), "://");
+    return protocol + "://" + StringUtils.substringAfter(receivingURL.toString(), "://");
+  }
+
   public void destroy() {
   }
+
+
 }
