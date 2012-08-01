@@ -32,7 +32,7 @@ import static org.mockito.Mockito.*;
 
 public class OpenIdAuthenticationFilterTest {
   @Test
-  public void doStopChaining() throws Exception {
+  public void should_redirect_and_stop_chaining() throws Exception {
     OpenIdClient openIdClient = mock(OpenIdClient.class);
     when(openIdClient.createAuthenticationRequest()).thenReturn(mock(AuthRequest.class));
     OpenIdAuthenticationFilter filter = new OpenIdAuthenticationFilter(openIdClient);
@@ -47,7 +47,7 @@ public class OpenIdAuthenticationFilterTest {
   }
 
   @Test
-  public void doGetPattern() {
+  public void url_pattern() {
     OpenIdAuthenticationFilter filter = new OpenIdAuthenticationFilter(mock(OpenIdClient.class));
 
     assertThat(filter.doGetPattern().toString()).isEqualTo("/sessions/new");

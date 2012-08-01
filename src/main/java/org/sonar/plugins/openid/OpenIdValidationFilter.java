@@ -30,7 +30,7 @@ import java.io.IOException;
 
 /**
  * Validate tokens forwarded by the OpenID provider after the request initiated by {@link OpenIdAuthenticationFilter}.
- * If authenfication is successful, then object of type UserDetails is added to request attributes.
+ * If authentication is successful, then object of type UserDetails is added to request attributes.
  */
 public final class OpenIdValidationFilter extends ServletFilter {
 

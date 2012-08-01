@@ -41,7 +41,7 @@ public class OpenIdPluginTest {
         .setProperty("sonar.authenticator.createUsers", "true");
     List<ServerExtension> extensions = (List<ServerExtension>) new OpenIdPlugin.Extensions(settings).provide();
 
-    assertThat(extensions).hasSize(5);
+    assertThat(extensions).hasSize(6);
     assertThat(extensions).doesNotHaveDuplicates();
     assertThat(extensions).contains(OpenIdAuthenticationFilter.class);
   }
