@@ -24,7 +24,11 @@ import org.openid4java.message.AuthSuccess;
 import org.sonar.api.ServerExtension;
 
 /**
- * Adds verifications to authentication request.
+ * <p>Adds verifications to authentication request.</p>
+ * <p>The plugin providing this extension must use the same classloader than the openid plugin, by setting the parameter <basePlugin> of sonar-packaging-maven-plugin
+ * to <code>openid</code>. See more details in the
+ * <a href="https://github.com/SonarCommunity/sonar-openid/tree/master/samples/sonar-openid-sample-extension-plugin">sample plugin</a>.
+ * </p>
  *
  * @since 1.1
  */
@@ -39,6 +43,7 @@ public abstract class OpenIdExtension implements ServerExtension {
 
   /**
    * Override this method to complete the verification of OpenId response.
+   *
    * @return is the response verified and user allowed to connect ?
    * @throws RuntimeException if the response can't be verified
    */
