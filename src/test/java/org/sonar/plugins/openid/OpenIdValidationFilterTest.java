@@ -33,67 +33,6 @@ import static org.fest.assertions.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 public class OpenIdValidationFilterTest {
-  @Test
-  public void should_verify_and_continue_chaining() throws Exception {
-    OpenIdClient openIdClient = mock(OpenIdClient.class);
-    when(openIdClient.verify(anyString(), any(ParameterList.class))).thenReturn(null);
-    when(openIdClient.getReturnToUrl()).thenReturn("http://localhost:9000");
-
-    OpenIdValidationFilter filter = new OpenIdValidationFilter(openIdClient);
-    HttpServletRequest request = mock(HttpServletRequest.class);
-    when(request.getRequestURL()).thenReturn(new StringBuffer("http://localhost:9000?foo=bar"));
-    HttpServletResponse response = mock(HttpServletResponse.class);
-    FilterChain chain = mock(FilterChain.class);
-
-    filter.doFilter(request, response, chain);
-
-    // not authenticated
-    verify(request, never()).setAttribute(anyString(), anyObject());
-
-    verify(openIdClient).verify(eq("http://localhost:9000?foo=bar"), any(ParameterList.class));
-    verify(chain).doFilter(request, response);
-    verifyZeroInteractions(response);
-  }
-
-  @Test
-  public void should_support_ssl() throws Exception {
-    OpenIdClient openIdClient = mock(OpenIdClient.class);
-    when(openIdClient.verify(anyString(), any(ParameterList.class))).thenReturn(null);
-    when(openIdClient.getReturnToUrl()).thenReturn("https://localhost:9000");
-
-    OpenIdValidationFilter filter = new OpenIdValidationFilter(openIdClient);
-    HttpServletRequest request = mock(HttpServletRequest.class);
-    // return http instead of https when a proxy is installed
-    when(request.getRequestURL()).thenReturn(new StringBuffer("http://localhost:9000?foo=bar"));
-    HttpServletResponse response = mock(HttpServletResponse.class);
-    FilterChain chain = mock(FilterChain.class);
-
-    filter.doFilter(request, response, chain);
-
-    // not authenticated
-    verify(request, never()).setAttribute(anyString(), anyObject());
-
-    verify(openIdClient).verify(eq("https://localhost:9000?foo=bar"), any(ParameterList.class));
-    verify(chain).doFilter(request, response);
-    verifyZeroInteractions(response);
-  }
-
-  @Test
-  public void doGetPattern() {
-    OpenIdValidationFilter filter = new OpenIdValidationFilter(mock(OpenIdClient.class));
-
-    assertThat(filter.doGetPattern().toString()).isEqualTo("/openid/validate");
-  }
-
-  @Test
-  public void init_and_destroy_do_nothing() throws ServletException {
-    OpenIdValidationFilter filter = new OpenIdValidationFilter(mock(OpenIdClient.class));
-
-    filter.init(mock(FilterConfig.class));
-    filter.destroy();
-
-    // oh well... what can be tested ??
-  }
 
   @Test
   public void add_user_to_session_on_successful_authentication() throws Exception {
@@ -115,4 +54,67 @@ public class OpenIdValidationFilterTest {
     // continue chaining
     verify(chain).doFilter(request, response);
   }
+
+  @Test
+  public void should_support_ssl() throws Exception {
+    UserDetails user = new UserDetails();
+    OpenIdClient openIdClient = mock(OpenIdClient.class);
+    when(openIdClient.getReturnToUrl()).thenReturn("https://localhost:9000");
+    when(openIdClient.verify(eq("https://localhost:9000?foo=bar"), any(ParameterList.class))).thenReturn(user);
+
+    OpenIdValidationFilter filter = new OpenIdValidationFilter(openIdClient);
+    HttpServletRequest request = mock(HttpServletRequest.class);
+    // return http instead of https when a proxy is installed
+    when(request.getRequestURL()).thenReturn(new StringBuffer("http://localhost:9000?foo=bar"));
+    HttpServletResponse response = mock(HttpServletResponse.class);
+    FilterChain chain = mock(FilterChain.class);
+
+    filter.doFilter(request, response, chain);
+
+    // user is added to HTTP request
+    verify(request).setAttribute(OpenIdValidationFilter.USER_ATTRIBUTE, user);
+
+    // continue chaining
+    verify(chain).doFilter(request, response);
+  }
+
+  @Test
+  public void should_redirect_to_unauthorized_page() throws Exception {
+    OpenIdClient openIdClient = mock(OpenIdClient.class);
+    when(openIdClient.getReturnToUrl()).thenReturn("http://localhost:9000");
+    when(openIdClient.verify(eq("http://localhost:9000?foo=bar"), any(ParameterList.class))).thenReturn(null); // not authenticated
+
+    OpenIdValidationFilter filter = new OpenIdValidationFilter(openIdClient);
+    FilterChain chain = mock(FilterChain.class);
+    HttpServletResponse response = mock(HttpServletResponse.class);
+    HttpServletRequest request = mock(HttpServletRequest.class);
+    when(request.getRequestURL()).thenReturn(new StringBuffer("http://localhost:9000?foo=bar"));
+
+    filter.doFilter(request, response, chain);
+
+    // user is added to HTTP request
+    verify(request, never()).setAttribute(eq(OpenIdValidationFilter.USER_ATTRIBUTE), any(UserDetails.class));
+
+    // redirect
+    verify(response).sendRedirect("/openid/unauthorized");
+  }
+
+  @Test
+  public void doGetPattern() {
+    OpenIdValidationFilter filter = new OpenIdValidationFilter(mock(OpenIdClient.class));
+
+    assertThat(filter.doGetPattern().toString()).isEqualTo("/openid/validate");
+  }
+
+  @Test
+  public void init_and_destroy_do_nothing() throws ServletException {
+    OpenIdValidationFilter filter = new OpenIdValidationFilter(mock(OpenIdClient.class));
+
+    filter.init(mock(FilterConfig.class));
+    filter.destroy();
+
+    // oh well... what can be tested ??
+  }
+
+
 }

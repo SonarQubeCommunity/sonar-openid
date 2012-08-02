@@ -22,11 +22,13 @@ package org.sonar.plugins.openid;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.commons.lang.StringUtils;
 import org.openid4java.message.ParameterList;
+import org.slf4j.LoggerFactory;
 import org.sonar.api.security.UserDetails;
 import org.sonar.api.web.ServletFilter;
 
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 /**
@@ -53,14 +55,22 @@ public final class OpenIdValidationFilter extends ServletFilter {
   public void doFilter(ServletRequest request, ServletResponse response, FilterChain filterChain) throws IOException, ServletException {
     ParameterList responseParameters = new ParameterList(request.getParameterMap());
     HttpServletRequest httpRequest = (HttpServletRequest) request;
+    HttpServletResponse httpResponse = (HttpServletResponse) response;
 
     String receivingURL = requestUrl(httpRequest);
-    UserDetails user = openIdClient.verify(receivingURL, responseParameters);
-    if (user != null) {
-      request.setAttribute(USER_ATTRIBUTE, user);
+    UserDetails user;
+    try {
+      user = openIdClient.verify(receivingURL, responseParameters);
+    } catch (RuntimeException e) {
+      LoggerFactory.getLogger(OpenIdValidationFilter.class).error("Fail to verify OpenId request", e);
+      throw e;
     }
-
-    filterChain.doFilter(request, response);
+    if (user == null) {
+      httpResponse.sendRedirect("/openid/unauthorized");
+    } else {
+      request.setAttribute(USER_ATTRIBUTE, user);
+      filterChain.doFilter(request, response);
+    }
   }
 
   @VisibleForTesting

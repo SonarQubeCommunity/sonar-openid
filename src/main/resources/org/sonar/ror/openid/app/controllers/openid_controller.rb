@@ -13,4 +13,10 @@ class OpenidController < ApplicationController
     redirect_back_or_default(home_url)
   end
 
+  def unauthorized
+    # this page should be moved to sonar core
+    params[:layout]='false'
+    render :action => 'unauthorized'
+  end
+
 end

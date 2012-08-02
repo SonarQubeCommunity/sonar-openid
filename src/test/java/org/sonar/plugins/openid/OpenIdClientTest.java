@@ -19,22 +19,24 @@
  */
 package org.sonar.plugins.openid;
 
+import com.google.common.collect.Lists;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.openid4java.consumer.ConsumerException;
 import org.openid4java.consumer.ConsumerManager;
+import org.openid4java.consumer.VerificationResult;
+import org.openid4java.discovery.DiscoveryException;
 import org.openid4java.discovery.DiscoveryInformation;
-import org.openid4java.message.AuthRequest;
-import org.openid4java.message.AuthSuccess;
-import org.openid4java.message.MessageExtension;
-import org.openid4java.message.ParameterList;
+import org.openid4java.discovery.UrlIdentifier;
+import org.openid4java.message.*;
 import org.openid4java.message.ax.AxMessage;
 import org.openid4java.message.ax.FetchResponse;
 import org.openid4java.message.sreg.SRegMessage;
 import org.openid4java.message.sreg.SRegResponse;
 import org.sonar.api.config.Settings;
 import org.sonar.api.security.UserDetails;
+import org.sonar.plugins.openid.api.OpenIdExtension;
 
 import static org.fest.assertions.Assertions.assertThat;
 import static org.mockito.Matchers.anyString;
@@ -151,11 +153,18 @@ public class OpenIdClientTest {
 
   @Test
   public void verify_failed_authentication() throws Exception {
-    OpenIdClient client = new OpenIdClient(mock(ConsumerManager.class));
+    thrown.expect(IllegalStateException.class);
 
-    UserDetails user = client.verify("https://www.google.com/o8/id", ParameterList.createFromQueryString(""));
+    ConsumerManager consumerManager = mock(ConsumerManager.class);
 
-    assertThat(user).isNull();
+    // no "verifiedId"
+    VerificationResult verification = new VerificationResult();
+    verification.setVerifiedId(null);
+
+    when(consumerManager.verify(anyString(), any(ParameterList.class), any(DiscoveryInformation.class))).thenReturn(verification);
+    OpenIdClient client = new OpenIdClient(new Settings()).setConsumerManager(consumerManager);
+
+    client.verify("http://localhost:9000", new ParameterList());
   }
 
   @Test
@@ -164,7 +173,7 @@ public class OpenIdClientTest {
     AuthRequest request = mock(AuthRequest.class);
     when(consumerManager.authenticate(any(DiscoveryInformation.class), anyString())).thenReturn(request);
 
-    AuthRequest result = new OpenIdClient(consumerManager).createAuthenticationRequest();
+    AuthRequest result = new OpenIdClient(new Settings()).setConsumerManager(consumerManager).createAuthenticationRequest();
 
     assertThat(result).isSameAs(request);
     verify(request, times(2)).addExtension(any(MessageExtension.class));
@@ -177,6 +186,60 @@ public class OpenIdClientTest {
     ConsumerManager consumerManager = mock(ConsumerManager.class);
     when(consumerManager.authenticate(any(DiscoveryInformation.class), anyString())).thenThrow(new ConsumerException(""));
 
-    new OpenIdClient(consumerManager).createAuthenticationRequest();
+    new OpenIdClient(new Settings()).setConsumerManager(consumerManager).createAuthenticationRequest();
+  }
+
+  @Test
+  public void unauthorized_by_extension() throws Exception {
+    ConsumerManager consumerManager = mock(ConsumerManager.class);
+
+    VerificationResult result = newAuthenticatedResult();
+    when(consumerManager.verify(eq("http://localhost:9000"), any(ParameterList.class), any(DiscoveryInformation.class)))
+      .thenReturn(result);
+
+    OpenIdClient client = new OpenIdClient(new Settings(), Lists.<OpenIdExtension>newArrayList(new UnauthorizeExtension(), new AuthorizeExtension()));
+    client.setConsumerManager(consumerManager);
+
+    assertThat(client.verify("http://localhost:9000", new ParameterList())).isNull();
+  }
+
+  @Test
+  public void authorized_by_extensions() throws Exception {
+    ConsumerManager consumerManager = mock(ConsumerManager.class);
+
+    VerificationResult result = newAuthenticatedResult();
+    when(consumerManager.verify(eq("http://localhost:9000"), any(ParameterList.class), any(DiscoveryInformation.class)))
+      .thenReturn(result);
+
+    OpenIdClient client = new OpenIdClient(new Settings(), Lists.<OpenIdExtension>newArrayList(new AuthorizeExtension()));
+    client.setConsumerManager(consumerManager);
+
+    assertThat(client.verify("http://localhost:9000", new ParameterList())).isNotNull();
+  }
+
+  private VerificationResult newAuthenticatedResult() throws DiscoveryException, MessageException {
+    VerificationResult verification = new VerificationResult();
+    verification.setVerifiedId(new UrlIdentifier("http://example.com"));
+    SRegResponse sRegResponse = SRegResponse.createSRegResponse(new ParameterList());
+    sRegResponse.addAttribute(OpenIdClient.SREG_ATTR_FULLNAME, "marius");
+    AuthSuccess authSuccess = mock(AuthSuccess.class);
+    when(authSuccess.hasExtension(SRegMessage.OPENID_NS_SREG)).thenReturn(true);
+    when(authSuccess.getExtension(SRegMessage.OPENID_NS_SREG)).thenReturn(sRegResponse);
+    verification.setAuthResponse(authSuccess);
+    return verification;
+  }
+
+  static class AuthorizeExtension extends OpenIdExtension {
+    @Override
+    public boolean doVerifyResponse(AuthSuccess response) {
+      return true;
+    }
+  }
+
+  static class UnauthorizeExtension extends OpenIdExtension {
+    @Override
+    public boolean doVerifyResponse(AuthSuccess response) {
+      return false;
+    }
   }
 }
