@@ -165,18 +165,19 @@ public class OpenIdClient implements ServerExtension {
     // the verified identifier is null if the verification failed
     Identifier verified = verification.getVerifiedId();
     if (verified == null) {
-      throw new IllegalStateException("Fail to verify OpenId request: " + verification.getStatusMsg());
-    }
-    AuthSuccess authSuccess = (AuthSuccess) verification.getAuthResponse();
-    if (authSuccess == null) {
-      throw new IllegalStateException("The OpenId response message is missing");
-    }
-    boolean ok = true;
-    for (OpenIdExtension extension : extensions) {
-      ok &= extension.doVerifyResponse(authSuccess);
-    }
-    if (ok) {
-      user = toUser(authSuccess);
+      LoggerFactory.getLogger(OpenIdClient.class).warn("Fail to verify OpenId request: " + verification.getStatusMsg());
+    } else {
+      AuthSuccess authSuccess = (AuthSuccess) verification.getAuthResponse();
+      if (authSuccess == null) {
+        throw new IllegalStateException("The OpenId response message is missing");
+      }
+      boolean ok = true;
+      for (OpenIdExtension extension : extensions) {
+        ok &= extension.doVerifyResponse(authSuccess);
+      }
+      if (ok) {
+        user = toUser(authSuccess);
+      }
     }
     return user;
   }

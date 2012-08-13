@@ -152,19 +152,18 @@ public class OpenIdClientTest {
   }
 
   @Test
-  public void verify_failed_authentication() throws Exception {
-    thrown.expect(IllegalStateException.class);
-
+  public void should_ignore_auth_cancellation() throws Exception {
     ConsumerManager consumerManager = mock(ConsumerManager.class);
 
-    // no "verifiedId"
+    // no "verifiedId", for example when user does not approve to send Google profile (the form after authentication)
     VerificationResult verification = new VerificationResult();
     verification.setVerifiedId(null);
 
     when(consumerManager.verify(anyString(), any(ParameterList.class), any(DiscoveryInformation.class))).thenReturn(verification);
     OpenIdClient client = new OpenIdClient(new Settings()).setConsumerManager(consumerManager);
 
-    client.verify("http://localhost:9000", new ParameterList());
+    UserDetails user = client.verify("http://localhost:9000", new ParameterList());
+    assertThat(user).isNull();
   }
 
   @Test
