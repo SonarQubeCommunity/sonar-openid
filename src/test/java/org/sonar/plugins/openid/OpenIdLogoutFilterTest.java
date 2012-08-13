@@ -28,6 +28,7 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import static org.fest.assertions.Assertions.assertThat;
 import static org.mockito.Matchers.anyString;
@@ -55,6 +56,7 @@ public class OpenIdLogoutFilterTest {
   public void should_not_redirect_if_no_logout_url() throws Exception {
     Settings settings = new Settings();
     OpenIdLogoutFilter filter = new OpenIdLogoutFilter(settings);
+    filter.init(mock(FilterConfig.class));
 
     HttpServletRequest request = mock(HttpServletRequest.class);
     HttpServletResponse response = mock(HttpServletResponse.class);
@@ -67,17 +69,20 @@ public class OpenIdLogoutFilterTest {
   }
 
   @Test
-  public void should_redirect_to_provider_logout_url() throws Exception {
+  public void should_invalidate_session_and_redirect_to_provider_logout_url() throws Exception {
     Settings settings = new Settings().setProperty(OpenIdLogoutFilter.PROPERTY_PROVIDER_LOGOUT_URL, "https://www.google.com/accounts/Logout");
     OpenIdLogoutFilter filter = new OpenIdLogoutFilter(settings);
 
+    HttpSession session = mock(HttpSession.class);
     HttpServletRequest request = mock(HttpServletRequest.class);
+    when(request.getSession(false)).thenReturn(session);
     HttpServletResponse response = mock(HttpServletResponse.class);
     FilterChain chain = mock(FilterChain.class);
 
     filter.doFilter(request, response, chain);
 
     verify(chain, never()).doFilter(any(ServletRequest.class), any(ServletResponse.class));
+    verify(session).invalidate();
     verify(response).sendRedirect("https://www.google.com/accounts/Logout");
   }
 }

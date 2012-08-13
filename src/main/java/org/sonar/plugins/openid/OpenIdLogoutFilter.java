@@ -26,7 +26,9 @@ import org.sonar.api.config.Settings;
 import org.sonar.api.web.ServletFilter;
 
 import javax.servlet.*;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import java.io.IOException;
 
 public final class OpenIdLogoutFilter extends ServletFilter {
@@ -57,6 +59,10 @@ public final class OpenIdLogoutFilter extends ServletFilter {
   public void doFilter(ServletRequest request, ServletResponse response, FilterChain filterChain) throws IOException, ServletException {
     String providerLogoutUrl = getLogoutUrl();
     if (!Strings.isNullOrEmpty(providerLogoutUrl)) {
+      HttpSession session = ((HttpServletRequest) request).getSession(false);
+      if (session != null) {
+        session.invalidate();
+      }
       ((HttpServletResponse) response).sendRedirect(providerLogoutUrl);
     } else {
       filterChain.doFilter(request, response);
