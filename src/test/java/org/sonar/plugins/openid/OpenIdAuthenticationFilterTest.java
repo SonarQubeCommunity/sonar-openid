@@ -23,6 +23,7 @@ import org.junit.Test;
 import org.openid4java.message.AuthRequest;
 
 import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -36,6 +37,7 @@ public class OpenIdAuthenticationFilterTest {
     OpenIdClient openIdClient = mock(OpenIdClient.class);
     when(openIdClient.createAuthenticationRequest()).thenReturn(mock(AuthRequest.class));
     OpenIdAuthenticationFilter filter = new OpenIdAuthenticationFilter(openIdClient);
+    filter.init(mock(FilterConfig.class));
     HttpServletRequest request = mock(HttpServletRequest.class);
     HttpServletResponse response = mock(HttpServletResponse.class);
     FilterChain chain = mock(FilterChain.class);
@@ -44,6 +46,7 @@ public class OpenIdAuthenticationFilterTest {
 
     verifyZeroInteractions(chain);
     verify(response).sendRedirect(anyString());
+    filter.destroy();
   }
 
   @Test
