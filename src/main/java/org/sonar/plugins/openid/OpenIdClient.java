@@ -22,6 +22,7 @@ package org.sonar.plugins.openid;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import org.apache.commons.lang.StringUtils;
 import org.openid4java.consumer.ConsumerManager;
 import org.openid4java.consumer.InMemoryConsumerAssociationStore;
 import org.openid4java.consumer.InMemoryNonceVerifier;
@@ -100,7 +101,9 @@ public class OpenIdClient implements ServerExtension {
   @VisibleForTesting
   void initReturnToUrl() {
     String sonarUrl = settings.getString(PROPERTY_SONAR_URL);
-    Preconditions.checkState(!Strings.isNullOrEmpty(sonarUrl), "Property sonar.openid.sonarServerUrl is missing");
+    Preconditions.checkArgument(StringUtils.isNotBlank(sonarUrl), "Property sonar.openid.sonarServerUrl is missing");
+    Preconditions.checkArgument(!sonarUrl.contains("?"), "Property sonar.openid.sonarServerUrl must not contain the character ?");
+    Preconditions.checkArgument(!StringUtils.endsWith(sonarUrl, "/"), "Property sonar.openid.sonarServerUrl must not end with with slash /");
     returnToUrl = sonarUrl + "/openid/validate";
   }
 

@@ -37,6 +37,7 @@ public class OpenIdValidationFilterTest {
   @Test
   public void add_user_to_session_on_successful_authentication() throws Exception {
     OpenIdClient openIdClient = mock(OpenIdClient.class);
+    when(openIdClient.getReturnToUrl()).thenReturn("https://localhost:9000");
     UserDetails user = new UserDetails();
     when(openIdClient.verify(anyString(), any(ParameterList.class))).thenReturn(user);
 
@@ -66,6 +67,32 @@ public class OpenIdValidationFilterTest {
     HttpServletRequest request = mock(HttpServletRequest.class);
     // return http instead of https when a proxy is installed
     when(request.getRequestURL()).thenReturn(new StringBuffer("http://localhost:9000?foo=bar"));
+    when(request.getQueryString()).thenReturn("foo=bar");
+    HttpServletResponse response = mock(HttpServletResponse.class);
+    FilterChain chain = mock(FilterChain.class);
+
+    filter.doFilter(request, response, chain);
+
+    // user is added to HTTP request
+    verify(request).setAttribute(OpenIdValidationFilter.USER_ATTRIBUTE, user);
+
+    // continue chaining
+    verify(chain).doFilter(request, response);
+  }
+
+  @Test
+  public void should_support_reverse_proxy() throws Exception {
+    UserDetails user = new UserDetails();
+    OpenIdClient openIdClient = mock(OpenIdClient.class);
+    when(openIdClient.getReturnToUrl()).thenReturn("http://integration.silverpeas.org/sonar");
+    when(openIdClient.verify(eq("http://integration.silverpeas.org/sonar?foo=bar"), any(ParameterList.class))).thenReturn(user);
+
+    OpenIdValidationFilter filter = new OpenIdValidationFilter(openIdClient);
+    HttpServletRequest request = mock(HttpServletRequest.class);
+    // return http instead of https when a proxy is installed
+    when(request.getRequestURL()).thenReturn(new StringBuffer("http://127.0.0.1:9000?foo=bar"));
+    when(request.getQueryString()).thenReturn("foo=bar");
+    when(request.getContextPath()).thenReturn("sonar");
     HttpServletResponse response = mock(HttpServletResponse.class);
     FilterChain chain = mock(FilterChain.class);
 

@@ -75,16 +75,13 @@ public final class OpenIdValidationFilter extends ServletFilter {
 
   @VisibleForTesting
   String requestUrl(HttpServletRequest httpRequest) {
-    StringBuffer receivingURL = httpRequest.getRequestURL();
+    StringBuilder receivingURL = new StringBuilder(openIdClient.getReturnToUrl());
     String queryString = httpRequest.getQueryString();
     if (StringUtils.isNotEmpty(queryString)) {
-      receivingURL.append("?").append(httpRequest.getQueryString());
+      // the return-to url does not contain ? (see OpenIdClient#initReturnToUrl()
+      receivingURL.append("?").append(queryString);
     }
-
-    // Support SSL endpoint
-    // httpRequest.getRequestURL() extracts http:// if a proxy like nginx or mod_proxy is installed in front of server.
-    String protocol = StringUtils.substringBefore(openIdClient.getReturnToUrl(), "://");
-    return protocol + "://" + StringUtils.substringAfter(receivingURL.toString(), "://");
+    return receivingURL.toString();
   }
 
   public void destroy() {

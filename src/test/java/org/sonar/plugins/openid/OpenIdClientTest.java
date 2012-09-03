@@ -58,7 +58,7 @@ public class OpenIdClientTest {
 
   @Test
   public void initReturnUrl_fail_if_missing_sonar_url() {
-    thrown.expect(IllegalStateException.class);
+    thrown.expect(IllegalArgumentException.class);
     thrown.expectMessage("Property sonar.openid.sonarServerUrl is missing");
 
     OpenIdClient client = new OpenIdClient(new Settings());
