@@ -75,17 +75,28 @@ public class OpenIdClientTest {
   }
 
   /**
-   * Requires an internet connection
+   * TODO Currently requires an internet connection. An OpenId server should be embedded.
+   * Meanwhile the test connects to Google, and if it's down (yes it's possible !), the test fallbacks on Yahoo.
    */
   @Test
   public void initDiscoveryInfo_test_google() {
+    try {
+      testRemoteOpenIdProvider("https://www.google.com/o8/id");
+    } catch (Exception e) {
+      System.out.println("Failed to connect to Google OpenId Provider");
+      e.printStackTrace();
+      testRemoteOpenIdProvider("http://open.login.yahoo.com");
+    }
+  }
+
+  private void testRemoteOpenIdProvider(String endpoint) {
     Settings settings = new Settings()
       .setProperty(OpenIdClient.PROPERTY_SONAR_URL, "http://localhost:9000")
-      .setProperty(OpenIdClient.PROPERTY_OPENID_URL, "https://www.google.com/o8/id");
+      .setProperty(OpenIdClient.PROPERTY_OPENID_URL, endpoint);
     OpenIdClient client = new OpenIdClient(settings);
     client.start();
 
-    assertThat(client.getDiscoveryInfo().getOPEndpoint().toString()).isEqualTo("https://www.google.com/o8/id");
+    assertThat(client.getDiscoveryInfo().getOPEndpoint().toString()).isEqualTo(endpoint);
     assertThat(client.getDiscoveryInfo().getVersion()).startsWith("http://");
   }
 
