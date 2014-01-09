@@ -66,11 +66,20 @@ public class OpenIdClientTest {
   }
 
   @Test
-  public void initDiscoveryInfo_fail_if_missing_url() {
+  public void initDiscoveryInfo_fail_if_missing_url_and_domain() {
     thrown.expect(IllegalStateException.class);
     thrown.expectMessage("Property sonar.openid.providerUrl is missing");
 
     OpenIdClient client = new OpenIdClient(new Settings());
+    client.start();
+  }
+  
+  @Test
+  public void initDiscoveryInfo_succeed_if_domain_specified() {
+    Settings settings = new Settings().setProperty(OpenIdClient.PROPERTY_SONAR_URL, "http://localhost:9000")
+        .setProperty(OpenIdClient.PROPERTY_OPENID_GOOGLE_DOMAIN, "lashpoint.com");
+
+    OpenIdClient client = new OpenIdClient(settings);
     client.start();
   }
 
