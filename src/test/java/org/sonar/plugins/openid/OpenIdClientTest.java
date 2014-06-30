@@ -135,6 +135,21 @@ public class OpenIdClientTest {
   }
 
   @Test
+  public void toUserDetails_sreg11_attributes() throws Exception {
+    AuthSuccess authSuccess = mock(AuthSuccess.class);
+    when(authSuccess.hasExtension(SRegMessage.OPENID_NS_SREG11)).thenReturn(true);
+    SRegResponse sreg = SRegResponse.createFetchResponse();
+    sreg.addAttribute("fullname", "Dee Dee MacCall");
+    sreg.addAttribute("email", "deedee@maccall.com");
+    when(authSuccess.getExtension(SRegMessage.OPENID_NS_SREG11)).thenReturn(sreg);
+
+    UserDetails user = OpenIdClient.toUser(authSuccess);
+
+    assertThat(user.getName()).isEqualTo("Dee Dee MacCall");
+    assertThat(user.getEmail()).isEqualTo("deedee@maccall.com");
+  }
+
+  @Test
   public void toUserDetails_missing_fields() throws Exception {
     AuthSuccess authSuccess = mock(AuthSuccess.class);
     when(authSuccess.hasExtension(SRegMessage.OPENID_NS_SREG)).thenReturn(true);
