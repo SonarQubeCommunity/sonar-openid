@@ -45,7 +45,7 @@
   </scm>
   <issueManagement>
     <system>JIRA</system>
-    <url>http://jira.codehaus.org/browse/SONARPLUGINS/component/15493</url>
+    <url>http://jira.codehaus.org/browse/SONAROPNID</url>
   </issueManagement>
   <ciManagement>
     <system>Cloudbees</system>
