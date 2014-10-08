@@ -31,6 +31,11 @@
 
   <developers>
     <developer>
+      <id>jcsirot</id>
+      <name>Jean-Christophe Sirot</name>
+      <timezone>+1</timezone>
+    </developer>
+    <developer>
       <id>simon.brandhof</id>
       <name>Simon Brandhof</name>
       <timezone>+1</timezone>
