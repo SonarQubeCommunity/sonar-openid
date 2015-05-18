@@ -14,8 +14,8 @@
 
   <name>Sonar OpenID Plugin</name>
   <description>Enable user authentication and Single Sign-On through an OpenID provider</description>
-  <url>http://docs.codehaus.org/display/SONAR/OpenID+Plugin</url>
-  
+  <url>https://github.com/SonarCommunity/sonar-openid</url>
+
   <inceptionYear>2012</inceptionYear>
   <organization>
     <name>SonarSource</name>
