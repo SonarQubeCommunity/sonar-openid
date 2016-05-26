@@ -1,5 +1,6 @@
 Sonar OpenID Plugin
 ===================
+[![Build Status](https://api.travis-ci.org/SonarQubeCommunity/sonar-openid.svg)](https://travis-ci.org/SonarQubeCommunity/sonar-openid)
 
 Download and Version information: http://update.sonarsource.org/plugins/openid-confluence.html
 
