@@ -22,6 +22,7 @@ package org.sonar.plugins.openid;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+
 import org.apache.commons.lang.StringUtils;
 import org.openid4java.consumer.ConsumerManager;
 import org.openid4java.consumer.InMemoryConsumerAssociationStore;
@@ -52,6 +53,9 @@ import java.util.List;
 
 public class OpenIdClient implements ServerExtension {
 
+  public static final String DEFAULT_GOOGLE_APPS_ENDPOINT = "https://www.google.com/accounts/o8/site-xrds?hd=";
+  public static final String PROPERTY_OPENID_GOOGLE_DOMAIN = "sonar.openid.google.domain";
+  public static final String PROPERTY_OPENID_GOOGLE_ENDPOINT = "sonar.openid.google.endpoint";
   public static final String PROPERTY_SONAR_URL = "sonar.openid.sonarServerUrl";
   public static final String PROPERTY_OPENID_URL = "sonar.openid.providerUrl";
 
@@ -66,6 +70,9 @@ public class OpenIdClient implements ServerExtension {
   private DiscoveryInformation discoveryInfo;
   private String returnToUrl;
   private List<OpenIdExtension> extensions;
+
+  private boolean useGoogleDiscovery;
+  private String googleDomain;
 
   public OpenIdClient(Settings settings) {
     this(settings, Collections.<OpenIdExtension>emptyList());
@@ -93,8 +100,8 @@ public class OpenIdClient implements ServerExtension {
   }
 
   public void start() {
-    initManager();
     initDiscoveryInfo();
+    initManager();
     initReturnToUrl();
   }
 
@@ -109,8 +116,22 @@ public class OpenIdClient implements ServerExtension {
 
   @VisibleForTesting
   void initDiscoveryInfo() {
-    String endpoint = settings.getString(PROPERTY_OPENID_URL);
-    Preconditions.checkState(!Strings.isNullOrEmpty(endpoint), "Property " + PROPERTY_OPENID_URL + " is missing");
+    String endpoint;
+    googleDomain = settings.getString(PROPERTY_OPENID_GOOGLE_DOMAIN);
+
+    useGoogleDiscovery = !Strings.isNullOrEmpty(googleDomain);
+    if (useGoogleDiscovery) {
+      String googleAppsEndpoint = settings.getString(PROPERTY_OPENID_GOOGLE_ENDPOINT);
+      if (Strings.isNullOrEmpty(googleAppsEndpoint)) {
+        googleAppsEndpoint = DEFAULT_GOOGLE_APPS_ENDPOINT;
+      }
+      endpoint = googleAppsEndpoint + googleDomain;
+    }
+    else {
+      endpoint = settings.getString(PROPERTY_OPENID_URL);
+      Preconditions.checkState(!Strings.isNullOrEmpty(endpoint), "Property " + PROPERTY_OPENID_URL + " is missing");
+    }
+    
     try {
       List l = new Discovery().discover(endpoint);
       if (l == null || l.isEmpty()) {
@@ -128,6 +149,9 @@ public class OpenIdClient implements ServerExtension {
     manager.setAssociations(new InMemoryConsumerAssociationStore());
     manager.setNonceVerifier(new InMemoryNonceVerifier(5000));
     manager.getRealmVerifier().setEnforceRpId(false);
+    if (useGoogleDiscovery) {
+      manager.setDiscovery(new GoogleDomainDiscovery(googleDomain));
+    }
   }
 
   AuthRequest createAuthenticationRequest() {
