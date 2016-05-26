@@ -14,7 +14,7 @@
 
   <name>Sonar OpenID Plugin</name>
   <description>Enable user authentication and Single Sign-On through an OpenID provider</description>
-  <url>https://github.com/SonarCommunity/sonar-openid</url>
+  <url>https://github.com/SonarQubeCommunity/sonar-openid</url>
 
   <inceptionYear>2012</inceptionYear>
   <organization>
@@ -43,19 +43,15 @@
   </developers>
 
   <scm>
-    <connection>scm:git:https://github.com/SonarCommunity/sonar-openid</connection>
-    <developerConnection>scm:git:https://github.com/SonarCommunity/sonar-openid</developerConnection>
-    <url>https://github.com/SonarCommunity/sonar-openid</url>
+    <connection>scm:git:https://github.com/SonarQubeCommunity/sonar-openid</connection>
+    <developerConnection>scm:git:https://github.com/SonarQubeCommunity/sonar-openid</developerConnection>
+    <url>https://github.com/SonarQubeCommunity/sonar-openid</url>
     <tag>HEAD</tag>
   </scm>
   <issueManagement>
     <system>GitHub</system>
     <url>https://github.com/SonarCommunity/sonar-openid/issues</url>
   </issueManagement>
-  <ciManagement>
-    <system>Cloudbees</system>
-    <url>https://sonarplugins.ci.cloudbees.com/job/openid</url>
-  </ciManagement>
 
   <properties>
     <sonar.version>3.1</sonar.version>
