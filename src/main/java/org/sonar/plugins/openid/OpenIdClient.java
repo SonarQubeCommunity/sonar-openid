@@ -192,6 +192,9 @@ public class OpenIdClient implements ServerExtension {
       String email = null;
 
       SRegResponse sr = OpenIdUtils.getMessageAs(SRegResponse.class, authSuccess, SRegMessage.OPENID_NS_SREG);
+      if (sr == null) {
+        sr = OpenIdUtils.getMessageAs(SRegResponse.class, authSuccess, SRegMessage.OPENID_NS_SREG11);
+      }
       if (sr != null) {
         name = sr.getAttributeValue(SREG_ATTR_FULLNAME);
         email = sr.getAttributeValue(SREG_ATTR_EMAIL);
