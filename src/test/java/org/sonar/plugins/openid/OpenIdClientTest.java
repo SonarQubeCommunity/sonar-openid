@@ -34,6 +34,7 @@ import org.openid4java.message.ax.AxMessage;
 import org.openid4java.message.ax.FetchResponse;
 import org.openid4java.message.sreg.SRegMessage;
 import org.openid4java.message.sreg.SRegResponse;
+import org.openid4java.util.ProxyProperties;
 import org.sonar.api.config.Settings;
 import org.sonar.api.security.UserDetails;
 import org.sonar.plugins.openid.api.OpenIdExtension;
@@ -225,6 +226,23 @@ public class OpenIdClientTest {
     client.setConsumerManager(consumerManager);
 
     assertThat(client.verify("http://localhost:9000", new ParameterList())).isNotNull();
+  }
+
+  @Test
+  public void getProxySettings() {
+    Settings settings = new Settings();
+    settings.setProperty(OpenIdClient.PROPERTY_PROXY_HTTP_HOST, "proxy.local");
+    settings.setProperty(OpenIdClient.PROPERTY_PROXY_HTTP_PORT, 4585);
+    settings.setProperty(OpenIdClient.PROPERTY_PROXY_HTTP_USER, "john");
+    settings.setProperty(OpenIdClient.PROPERTY_PROXY_HTTP_PASSWORD, "123456aa");
+
+    OpenIdClient client = new OpenIdClient(settings);
+    ProxyProperties properties = client.getProxyProperties();
+
+    assertThat(properties.getProxyHostName()).isEqualTo("proxy.local");
+    assertThat(properties.getProxyPort()).isEqualTo(4585);
+    assertThat(properties.getUserName()).isEqualTo("john");
+    assertThat(properties.getPassword()).isEqualTo("123456aa");
   }
 
   private VerificationResult newAuthenticatedResult() throws DiscoveryException, MessageException {

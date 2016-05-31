@@ -39,6 +39,8 @@ import org.openid4java.message.ax.FetchResponse;
 import org.openid4java.message.sreg.SRegMessage;
 import org.openid4java.message.sreg.SRegRequest;
 import org.openid4java.message.sreg.SRegResponse;
+import org.openid4java.util.HttpClientFactory;
+import org.openid4java.util.ProxyProperties;
 import org.slf4j.LoggerFactory;
 import org.sonar.api.ServerExtension;
 import org.sonar.api.config.Settings;
@@ -54,6 +56,11 @@ public class OpenIdClient implements ServerExtension {
 
   public static final String PROPERTY_SONAR_URL = "sonar.openid.sonarServerUrl";
   public static final String PROPERTY_OPENID_URL = "sonar.openid.providerUrl";
+  public static final String PROPERTY_OPENID_USE_PROXY = "sonar.openid.useProxy";
+  public static final String PROPERTY_PROXY_HTTP_HOST = "http.proxyHost";
+  public static final String PROPERTY_PROXY_HTTP_PORT = "http.proxyPort";
+  public static final String PROPERTY_PROXY_HTTP_USER = "http.proxyUser";
+  public static final String PROPERTY_PROXY_HTTP_PASSWORD = "http.proxyPassword";
 
   static final String AX_ATTR_EMAIL = "email";
   static final String SREG_ATTR_EMAIL = "email";
@@ -124,13 +131,29 @@ public class OpenIdClient implements ServerExtension {
   }
 
   private void initManager() {
+    if (settings.getBoolean(PROPERTY_OPENID_USE_PROXY)) {
+      HttpClientFactory.setProxyProperties(getProxyProperties());
+    }
     manager = new ConsumerManager();
     manager.setAssociations(new InMemoryConsumerAssociationStore());
     manager.setNonceVerifier(new InMemoryNonceVerifier(5000));
     manager.getRealmVerifier().setEnforceRpId(false);
   }
 
-  AuthRequest createAuthenticationRequest() {
+    @VisibleForTesting
+    ProxyProperties getProxyProperties()
+    {
+        ProxyProperties proxyProps = new ProxyProperties();
+        proxyProps.setProxyHostName(settings.getString(PROPERTY_PROXY_HTTP_HOST));
+        proxyProps.setProxyPort(settings.getInt(PROPERTY_PROXY_HTTP_PORT));
+        if (settings.getString(PROPERTY_PROXY_HTTP_USER) != null) {
+          proxyProps.setUserName(settings.getString(PROPERTY_PROXY_HTTP_USER));
+          proxyProps.setPassword(settings.getString(PROPERTY_PROXY_HTTP_PASSWORD));
+        }
+        return proxyProps;
+    }
+
+    AuthRequest createAuthenticationRequest() {
     try {
       AuthRequest authReq = manager.authenticate(discoveryInfo, returnToUrl);
       FetchRequest fetch = FetchRequest.createFetchRequest();
